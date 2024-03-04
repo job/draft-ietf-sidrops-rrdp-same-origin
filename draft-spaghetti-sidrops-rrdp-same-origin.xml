@@ -1,0 +1,282 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!DOCTYPE rfc [
+ <!ENTITY nbsp "&#160;">
+]>
+
+<?rfc sortrefs="yes"?>
+<?rfc subcompact="no"?>
+<?rfc symrefs="yes"?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     category="std"
+     docName="draft-spaghetti-sidrops-rrdp-same-origin-00"
+     ipr="trust200902"
+     xml:lang="en"
+     sortRefs="true"
+     submissionType="IETF"
+     consensus="true"
+     updates="RFC8182"
+     version="3">
+
+  <front>
+
+    <title abbrev="RRDP Same-Origin Policy">Same-Origin Policy for the RPKI Repository Delta Protocol (RRDP)</title>
+
+    <author fullname="Job Snijders" initials="J." surname="Snijders">
+      <organization>Fastly</organization>
+      <address>
+        <postal>
+          <street/>
+          <code/>
+          <city>Amsterdam</city>
+          <country>Netherlands</country>
+        </postal>
+        <email>job@fastly.com</email>
+      </address>
+    </author>
+
+    <date />
+
+    <area>ops</area>
+    <workgroup>SIDROPS</workgroup>
+
+    <keyword>same-origin</keyword>
+    <keyword>RPKI</keyword>
+    <keyword>RRDP</keyword>
+
+    <abstract>
+      <t>
+        This document describes a Same-origin policy (SOP) requirement for RPKI Repository Delta Protocol (RRDP) servers and clients.
+        The same-origin policy concept is a security mechanism to restrict how a document loaded from one origin can cause interaction with resources from another origin.
+        Application of a same-origin policy in RRDP client/server communication isolates resources such as Delta and Snapshot files from different Repository Servers, reducing possible attack vectors.
+        This document updates RFC 8182.
+      </t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="intro">
+      <name>Introduction</name>
+
+      <t>
+        This document specifies a Same-origin policy (SOP) requirement for RPKI Repository Delta Protocol (RRDP) servers and clients.
+        The same-origin policy concept is a security mechanism to restrict how a document loaded from one origin can cause interaction with resources from another origin.
+        See <xref target="RFC6454"/> for an overview of the concept of an "origin".
+        Application of a same-origin policy in RRDP client/server communication isolates resources such as Delta and Snapshot files from different Repository Servers, reducing possible attack vectors.
+        This document updates <xref target="RFC8182"/>.
+      </t>
+
+      <section anchor="requirements">
+        <name>Requirements Language</name>
+        <t>
+          The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>", "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as described in BCP&nbsp;14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+
+    <section title="Implications of cross-origin resource requests in RRDP" anchor="issue">
+      <t>
+        The first RRDP protocol specification did not explicitly disallow 'cross-origin' URI references from the Update Notification file (<xref target="RFC8182" section="3.5.1"/>) towards Delta (<xref target="RFC8182" section="3.5.3"/>) and Snapshot (<xref target="RFC8182" section="3.5.2"/>) files, and was silent on the topic of HTTP Redirection (<xref target="RFC7231" section="6.4"/>).
+      </t>
+      <t>
+        The implication of cross-origin references in Update Notification files is that one Repository Server can reference RRDP resources on another Repository Server and in doing so inappropriately increase the resource consumption for both RRDP clients and the referenced Repository Server.
+        Consider the following example served up by <strong>https://badhost.example.net/notification.xml</strong>:
+      </t>
+<sourcecode>
+<![CDATA[
+<notification version="1" session_id="172322cf-c642-4e6f-806c-bd2375d8001a"
+    serial="47909" xmlns="http://www.ripe.net/rpki/rrdp">
+  <snapshot
+    uri="https://rrdp.ripe.net/172322cf-c642-4e6f-806c-bd2375d8001a/47909/snapshot.xml?r4nd0m"
+    hash="b525b18a46be4327b72d19550728523c373840922f3762146d7e3f5038ce7b1a"/>
+</notification>
+]]>
+</sourcecode>
+
+      <t>
+        Note that in the above Update Notification File the <em>badhost</em> operator is mimicking RIPE NCC's current RRDP session_id and serial and attaching a random query parameter to the snapshot URI.
+        Based on the above Update Notification File, all Relying Parties that reached <em>badhost</em> following SIA AccessDescriptions, would download a large file from the RIPE CDN, wasting bandwidth on both client and server-side.
+      </t>
+      <t>
+        Following from <xref target="RFC8182" section="3.4.1"/>, scheduling a new download is unavoidable for RPs, because each Delta file, Snapshot file, session_id, and serial is significant only in scope of the referring SIA AccessDescription, phrased differently: SIAs are globally unique and can be deduplicated before scheduling fetches, but (contrary to what <xref target="RFC8182" section="3.1"/> suggests) RRDP session_ids cannot be expected to be globally unique.
+      </t>
+      <t>
+        Should the adversary increments the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers.
+      </t>
+      <t>
+        Instead of using cross-originated URIs in the Update Notification File, an adversary could employ cross-origin HTTP Redirects towards other Repository Servers, causing similar undesirable behavior.
+      </t>
+      <t>
+        To summarize, cross-origin requests in RRDP can enable one Repository Server operator to increase resource consumption on another Repository Server exploiting Relaying Parties.
+      </t>
+    </section>
+
+    <section title="Proposed Solution">
+      <t>
+        To overcome the aforementioned <xref target="issue"/>, RRDP Repository Servers and Clients MUST apply a Same-Origin Policy to both the URIs referenced in an Update Notification File and any HTTP Redirects, as detailed in this section.
+      </t>
+      <section title="New Requirements for RRDP Repository Servers">
+        <t>
+          The following checklist items are added to <xref target="RFC8182" section="3.5.1.3"/>:
+        </t>
+        <ul>
+          <li>
+            The uri attribute in the snapshot element and optional delta elements MUST be part of the same origin (i.e., represent the same principal), meaning referenced URIs MUST have the same scheme, host, and port as the URI for the Update Notification File specified in the referring RRDP SIA AccessDescription.
+          </li>
+          <li>
+            The Repository Server MUST NOT respond with HTTP Redirects towards locations with an origin different from the origin of the Update Notification File specified in the referring RRDP SIA AccessDescription.
+          </li>
+        </ul>
+      </section>
+      <section title="New Requirements for Relying Parties using RRDP">
+        <t>
+          The following adds to <xref target="RFC8182" section="3.4.1"/>:
+        </t>
+        <ul>
+          <li>
+            The Relying Party MUST verify whether the uri attributes in the Update Notification File are of the same origin as the Update Notification File itself.
+            If this verification fails, the file MUST be rejected and RRDP cannot be used, see <xref target="RFC8182" section="3.4.5"/> for considerations.
+          </li>
+          <li>
+            The Relying Party MUST NOT follow HTTP Redirection following from attempts to download Update Notification, Delta, and Snapshot files if the target origin is different from the origin of the Update Notification File specified in the referring RRDP SIA AccessDescription.
+            If this verification fails, the RRDP session MUST be rejected and RRDP cannot be used, see <xref target="RFC8182" section="3.4.5"/> for considerations.
+          </li>
+        </ul>
+      </section>
+    </section>
+
+    <section title="Deployability in the Internet&apos;s current RPKI">
+      <t>
+        In the past 2.5 years no RRDP Repository Servers have employed cross-origin URIs in Update Notification Files.
+      </t>
+      <t>
+        At the moment of writing one RRDP server reached following the TALs of the five Regional Internet Registies employs a same-origin HTTP redirect.
+      </t>
+      <t>
+        This means that requiring application of a Same-Origin Policy would not cause any existing commonly-used RRDP Repository Server operations to become non-compliant.
+      </t>
+    </section>
+
+    <section anchor="security">
+      <name>Security Considerations</name>
+      <t>
+        Allowing Cross-Origin Requests as part of RRDP protocol deployment can cause problematic situations for Repository Server operators.
+      </t>
+      <t>
+        Should be elaborated on ...
+      </t>
+    </section>
+
+    <section anchor="iana" title="IANA Considerations">
+      <t>
+        No IANA actions required.
+      </t> 
+    </section>
+  </middle>
+
+  <back>
+    <references>
+      <name>References</name>
+      <references>
+        <name>Normative References</name>
+
+        <xi:include href="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+        <xi:include href="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.6454.xml"/>
+        <xi:include href="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7231.xml"/>
+        <xi:include href="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
+        <xi:include href="https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8182.xml"/>
+      </references>
+
+      <references>
+        <name>Informative References</name>
+
+        <reference anchor="rpki-client" target="https://www.rpki-client.org/">
+          <front>
+            <title>rpki-client</title>
+            <author fullname="Claudio Jeker"/>
+            <author fullname="Job Snijders"/>
+            <author fullname="Kristaps Dzonsons"/>
+            <author fullname="Theo Buehler"/>
+            <date/>
+          </front>
+        </reference>
+
+        <reference anchor="rpki-prover" target="https://github.com/lolepezy/rpki-prover">
+          <front>
+            <title>rpki-prover</title>
+            <author fullname="Mikhail Puzanov"/>
+            <date/>
+          </front>
+        </reference>
+
+       <reference anchor="FORT-validator" target="https://fortproject.net/en/validator">
+          <front>
+            <title>FORT validator</title>
+            <author fullname="Alberto Leiva"/>
+            <date/>
+          </front>
+        </reference>
+
+        <reference anchor="Routinator" target="https://github.com/NLnetLabs/routinator/">
+          <front>
+            <title>Routinator</title>
+            <author>
+              <organization>NLNet Labs</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+
+      </references>
+    </references>
+
+    <section anchor="acknowledgements">
+      <name>Acknowledgements</name>
+      <t>
+        The authors wish to thank
+        <contact fullname="..."/>,
+        <contact fullname="..."/>,
+        and
+        <contact fullname="..."/>.
+      </t>
+    </section>
+
+    <section removeInRFC="true">
+      <name>Implementation status</name>
+      <t>
+        This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in RFC 7942.
+        The description of implementations in this section is intended to assist the IETF in its decision processes in progressing drafts to RFCs.
+        Please note that the listing of any individual implementation here does not imply endorsement by the IETF.
+        Furthermore, no effort has been spent to verify the information presented here that was supplied by IETF contributors.
+        This is not intended as, and must not be construed to be, a catalog of available implementations or their features.
+        Readers are advised to note that other implementations may exist.
+      </t>
+      <t>
+        According to RFC 7942, "this will allow reviewers and working groups to assign due consideration to documents that have the benefit of running code, which may serve as evidence of valuable experimentation and feedback that have made the implemented protocols more mature.
+        It is up to the individual working groups to use this information as they see fit".
+      </t>
+
+      <ul>
+        <li>
+          OpenBSD's <xref target="rpki-client"/>
+        </li>
+        <li>
+          Mikhail Puzanov's <xref target="rpki-prover"/>
+        </li>
+        <li>
+          FORT project's <xref target="FORT-validator"/>
+        </li>
+        <li>
+          NLNet Labs' <xref target="Routinator"/>
+        </li>
+      </ul>
+    </section>
+
+  </back>
+
+</rfc>
