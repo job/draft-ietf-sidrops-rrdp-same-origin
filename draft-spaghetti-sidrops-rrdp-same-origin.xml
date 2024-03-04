@@ -103,7 +103,7 @@
         Based on the above Update Notification File, all Relying Parties that reached <em>badhost</em> following SIA AccessDescriptions, would download a large file from the RIPE CDN, wasting bandwidth on both client and server-side.
       </t>
       <t>
-        Following from <xref target="RFC8182" section="3.4.1"/>, scheduling a new download is unavoidable for RPs, because each Delta file, Snapshot file, session_id, and serial is significant only in scope of the referring SIA AccessDescription, phrased differently: SIAs are globally unique and can be deduplicated before scheduling fetches, but (contrary to what <xref target="RFC8182" section="3.1"/> suggests) RRDP session_ids cannot be expected to be globally unique.
+        Following from <xref target="RFC8182" section="3.4.1"/>, scheduling a new download is unavoidable for RPs, because each Delta file, Snapshot file, session_id, and serial are significant only in scope of the referring SIA AccessDescription, or phrased differently: SIAs are globally unique and can be deduplicated before scheduling fetches, but (contrary to what <xref target="RFC8182" section="3.1"/> suggests) RRDP session_ids cannot be expected to be globally unique.
       </t>
       <t>
         If the adversary increment the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers, exacerbating the issue.
