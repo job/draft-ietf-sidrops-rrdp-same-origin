@@ -106,7 +106,7 @@
         Following from <xref target="RFC8182" section="3.4.1"/>, scheduling a new download is unavoidable for RPs, because each Delta file, Snapshot file, session_id, and serial is significant only in scope of the referring SIA AccessDescription, phrased differently: SIAs are globally unique and can be deduplicated before scheduling fetches, but (contrary to what <xref target="RFC8182" section="3.1"/> suggests) RRDP session_ids cannot be expected to be globally unique.
       </t>
       <t>
-        Should the adversary increments the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers.
+        If the adversary increment the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers, exacerbating the issue.
       </t>
       <t>
         Instead of using cross-originated URIs in the Update Notification File, an adversary could employ cross-origin HTTP Redirects towards other Repository Servers, causing similar undesirable behavior.
@@ -118,7 +118,7 @@
 
     <section title="Proposed Solution">
       <t>
-        To overcome the aforementioned <xref target="issue"/>, RRDP Repository Servers and Clients MUST apply a Same-Origin Policy to both the URIs referenced in an Update Notification File and any HTTP Redirects, as detailed in this section.
+        To overcome the aforementioned issue described in <xref target="issue"/>, RRDP Repository Servers and Clients MUST apply a Same-Origin Policy to both the URIs referenced in an Update Notification File and any HTTP Redirects.
       </t>
       <section title="New Requirements for RRDP Repository Servers">
         <t>
@@ -239,10 +239,11 @@
       <name>Acknowledgements</name>
       <t>
         The authors wish to thank
-        <contact fullname="..."/>,
+        <contact fullname="Theo Buehler"/>
         <contact fullname="..."/>,
         and
-        <contact fullname="..."/>.
+        <contact fullname="..."/>
+        for helpful feedback and comments.
       </t>
     </section>
 
