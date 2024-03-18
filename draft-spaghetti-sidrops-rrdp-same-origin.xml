@@ -112,7 +112,7 @@
         Instead of using cross-originated URIs in the Update Notification File, an adversary could employ cross-origin HTTP Redirects towards other Repository Servers, causing similar undesirable behavior.
       </t>
       <t>
-        To summarize, cross-origin requests in RRDP can enable one Repository Server operator to increase resource consumption on another Repository Server exploiting Relaying Parties.
+        To summarize, cross-origin requests in RRDP can enable one Repository Server operator to increase resource consumption on another Repository Server exploiting Relying Parties.
       </t>
     </section>
 
