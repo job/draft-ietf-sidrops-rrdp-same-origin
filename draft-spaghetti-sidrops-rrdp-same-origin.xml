@@ -238,12 +238,16 @@
     <section anchor="acknowledgements">
       <name>Acknowledgements</name>
       <t>
-        The authors wish to thank
-        <contact fullname="Theo Buehler"/>
-        <contact fullname="..."/>,
+        The author wishes to thank
+        <contact fullname="Theo Buehler"/>,
+        <contact fullname="Claudio Jeker"/>,
+        <contact fullname="Alberto Leiva"/>,
+        <contact fullname="Tim Bruijnzeels"/>,
+        <contact fullname="Ties de Kock"/>,
+        <contact fullname="Martin Hoffmann"/>,
         and
-        <contact fullname="..."/>
-        for helpful feedback and comments.
+        <contact fullname="Mikhail Puzanov"/>
+        for their helpful feedback, comments, and implementation work.
       </t>
     </section>
 
