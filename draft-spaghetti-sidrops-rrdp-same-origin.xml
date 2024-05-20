@@ -106,13 +106,13 @@
         Following from <xref target="RFC8182" section="3.4.1"/>, scheduling a new download is unavoidable for RPs, because each Delta file, Snapshot file, session_id, and serial are significant only in scope of the referring SIA AccessDescription, or phrased differently: SIAs are globally unique and can be deduplicated before scheduling fetches, but (contrary to what <xref target="RFC8182" section="3.1"/> suggests) RRDP session_ids cannot be expected to be globally unique.
       </t>
       <t>
-        If the adversary increment the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers, exacerbating the issue.
+        If the adversary increments the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers, exacerbating the issue.
       </t>
       <t>
-        Instead of using cross-originated URIs in the Update Notification File, an adversary could employ cross-origin HTTP Redirects towards other Repository Servers, causing similar undesirable behavior.
+        An adversary could also employ cross-origin HTTP Redirects towards other Repository Servers, causing similar undesirable behavior.
       </t>
       <t>
-        To summarize, cross-origin requests in RRDP can enable one Repository Server operator to increase resource consumption on another Repository Server exploiting Relying Parties.
+        To summarize, cross-origin requests in RRDP can enable one Repository Server operator to increase resource consumption on another Repository Server exploiting Relying Party instances.
       </t>
     </section>
 
@@ -155,20 +155,18 @@
         In the past 2.5 years no RRDP Repository Servers have employed cross-origin URIs in Update Notification Files.
       </t>
       <t>
-        At the moment of writing one RRDP server reached following the TALs of the five Regional Internet Registies employs a same-origin HTTP redirect.
+        At the moment of writing only one RRDP server (reached following the TALs of the five Regional Internet Registies) employs a same-origin HTTP redirect.
       </t>
       <t>
-        This means that requiring application of a Same-Origin Policy would not cause any existing commonly-used RRDP Repository Server operations to become non-compliant.
+        This means that imposing a requirement for the application of a Same-Origin Policy does not cause any existing commonly-used RRDP Repository Server operations to become non-compliant.
       </t>
     </section>
 
     <section anchor="security">
       <name>Security Considerations</name>
       <t>
-        Allowing Cross-Origin Requests as part of RRDP protocol deployment can cause problematic situations for Repository Server operators.
-      </t>
-      <t>
-        Should be elaborated on ...
+        This internet-draft patches an oversight in the original RRDP protocol specification: cross-origin requests allow one repository operator to increase resource consumption for another repository operator.
+        Another way to avoid this undesirable implication would've been for the original RRDP specification to have used relative URIs instead of absolute URIs.
       </t>
     </section>
 
