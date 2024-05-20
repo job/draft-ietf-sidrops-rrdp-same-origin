@@ -14,7 +14,7 @@
 
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude"
      category="std"
-     docName="draft-spaghetti-sidrops-rrdp-same-origin-00"
+     docName="draft-spaghetti-sidrops-rrdp-same-origin-01"
      ipr="trust200902"
      xml:lang="en"
      sortRefs="true"
@@ -103,7 +103,8 @@
         Based on the above Update Notification File, all Relying Parties that reached <em>badhost</em> following SIA AccessDescriptions, would download a large file from the RIPE CDN, wasting bandwidth on both client and server-side.
       </t>
       <t>
-        Following from <xref target="RFC8182" section="3.4.1"/>, scheduling a new download is unavoidable for RPs, because each Delta file, Snapshot file, session_id, and serial are significant only in scope of the referring SIA AccessDescription, or phrased differently: SIAs are globally unique and can be deduplicated before scheduling fetches, but (contrary to what <xref target="RFC8182" section="3.1"/> suggests) RRDP session_ids cannot be expected to be globally unique.
+        RPs cannot avoid scheduling a new download per <xref target="RFC8182" section="3.4.1"/> because Delta file, Snapshot file, session_id and serial are significant only in scope of the referring SIA AccessDescription.
+        In other words, SIAs are globally unique and can be deduplicated before scheduling fetches, but RRDP session_ids are not globally unique, contrary to what <xref target="RFC8182" section="3.1"/> suggests.
       </t>
       <t>
         If the adversary increments the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers, exacerbating the issue.
