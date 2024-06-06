@@ -1,4 +1,4 @@
-NAME=draft-spaghetti-sidrops-rrdp-same-origin
+NAME=draft-ietf-sidrops-rrdp-same-origin
 
 .PHONY: all
 all: drafts
