@@ -14,7 +14,7 @@
 
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude"
      category="std"
-     docName="draft-ietf-sidrops-rrdp-same-origin-00"
+     docName="draft-ietf-sidrops-rrdp-same-origin-01"
      ipr="trust200902"
      xml:lang="en"
      sortRefs="true"
@@ -51,9 +51,8 @@
 
     <abstract>
       <t>
-        This document describes a Same-origin policy (SOP) requirement for RPKI Repository Delta Protocol (RRDP) servers and clients.
-        The same-origin policy concept is a security mechanism to restrict how a document loaded from one origin can cause interaction with resources from another origin.
-        Application of a same-origin policy in RRDP client/server communication isolates resources such as Delta and Snapshot files from different Repository Servers, reducing possible attack vectors.
+        This document describes a Same-Origin Policy (SOP) requirement for RPKI Repository Delta Protocol (RRDP) servers and clients.
+        Application of SOP in RRDP client/server communication isolates resources such as Delta and Snapshot files from different Repository Servers, reducing possible attack vectors.
         This document updates RFC 8182.
       </t>
     </abstract>
@@ -65,9 +64,9 @@
 
       <t>
         This document specifies a Same-origin policy (SOP) requirement for RPKI Repository Delta Protocol (RRDP) servers and clients.
-        The same-origin policy concept is a security mechanism to restrict how a document loaded from one origin can cause interaction with resources from another origin.
+        The SOP concept is a security mechanism to restrict how a document loaded from one origin can cause interaction with resources from another origin.
         See <xref target="RFC6454"/> for an overview of the concept of an "origin".
-        Application of a same-origin policy in RRDP client/server communication isolates resources such as Delta and Snapshot files from different Repository Servers, reducing possible attack vectors.
+        Application of SOP in RRDP client/server communication isolates resources such as Delta and Snapshot files from different Repository Servers, reducing possible attack vectors.
         This document updates <xref target="RFC8182"/>.
       </t>
 
@@ -85,39 +84,11 @@
       </t>
       <t>
         The implication of cross-origin references in Update Notification files is that one Repository Server can reference RRDP resources on another Repository Server and in doing so inappropriately increase the resource consumption for both RRDP clients and the referenced Repository Server.
-        Consider the following example served up by <strong>https://badhost.example.net/notification.xml</strong>:
-      </t>
-<sourcecode>
-<![CDATA[
-<notification version="1" session_id="172322cf-c642-4e6f-806c-bd2375d8001a"
-    serial="47909" xmlns="http://www.ripe.net/rpki/rrdp">
-  <snapshot
-    uri="https://rrdp.ripe.net/172322cf-c642-4e6f-806c-bd2375d8001a/47909/snapshot.xml?r4nd0m"
-    hash="b525b18a46be4327b72d19550728523c373840922f3762146d7e3f5038ce7b1a"/>
-</notification>
-]]>
-</sourcecode>
-
-      <t>
-        Note that in the above Update Notification File the <em>badhost</em> operator is mimicking RIPE NCC's current RRDP session_id and serial and attaching a random query parameter to the snapshot URI.
-        Based on the above Update Notification File, all Relying Parties that reached <em>badhost</em> following SIA AccessDescriptions, would download a large file from the RIPE CDN, wasting bandwidth on both client and server-side.
-      </t>
-      <t>
-        RPs cannot avoid scheduling a new download per <xref target="RFC8182" section="3.4.1"/> because Delta file, Snapshot file, session_id and serial are significant only in scope of the referring SIA AccessDescription.
-        In other words, SIAs are globally unique and can be deduplicated before scheduling fetches, but RRDP session_ids are not globally unique, contrary to what <xref target="RFC8182" section="3.1"/> suggests.
-      </t>
-      <t>
-        If the adversary increments the serial in tandem with RIPE NCC incrementing their RRDP serial, every next request to <em>https://badhost/notification.xml</em> causes another large file download on the RIPE NCC servers, exacerbating the issue.
-      </t>
-      <t>
         An adversary could also employ cross-origin HTTP Redirects towards other Repository Servers, causing similar undesirable behavior.
-      </t>
-      <t>
-        To summarize, cross-origin requests in RRDP can enable one Repository Server operator to increase resource consumption on another Repository Server exploiting Relying Party instances.
       </t>
     </section>
 
-    <section title="Proposed Solution">
+    <section title="Changes to RFC 8182">
       <t>
         To overcome the aforementioned issue described in <xref target="issue"/>, RRDP Repository Servers and Clients MUST apply a Same-Origin Policy to both the URIs referenced in an Update Notification File and any HTTP Redirects.
       </t>
@@ -125,29 +96,35 @@
         <t>
           The following checklist items are added to <xref target="RFC8182" section="3.5.1.3"/>:
         </t>
-        <ul>
-          <li>
-            The uri attribute in the snapshot element and optional delta elements MUST be part of the same origin (i.e., represent the same principal), meaning referenced URIs MUST have the same scheme, host, and port as the URI for the Update Notification File specified in the referring RRDP SIA AccessDescription.
-          </li>
-          <li>
-            The Repository Server MUST NOT respond with HTTP Redirects towards locations with an origin different from the origin of the Update Notification File specified in the referring RRDP SIA AccessDescription.
-          </li>
-        </ul>
+        <t>NEW</t>
+        <blockquote>
+          <ul>
+            <li>
+              The uri attribute in the snapshot element and optional delta elements MUST be part of the same origin (i.e., represent the same principal), meaning referenced URIs MUST have the same scheme, host, and port as the URI for the Update Notification File specified in the referring RRDP SIA AccessDescription.
+            </li>
+            <li>
+              The Repository Server MUST NOT respond with HTTP Redirects towards locations with an origin different from the origin of the Update Notification File specified in the referring RRDP SIA AccessDescription.
+            </li>
+          </ul>
+        </blockquote>
       </section>
       <section title="New Requirements for Relying Parties using RRDP">
         <t>
           The following adds to <xref target="RFC8182" section="3.4.1"/>:
         </t>
-        <ul>
-          <li>
-            The Relying Party MUST verify whether the uri attributes in the Update Notification File are of the same origin as the Update Notification File itself.
-            If this verification fails, the file MUST be rejected and RRDP cannot be used, see <xref target="RFC8182" section="3.4.5"/> for considerations.
-          </li>
-          <li>
-            The Relying Party MUST NOT follow HTTP Redirection following from attempts to download Update Notification, Delta, and Snapshot files if the target origin is different from the origin of the Update Notification File specified in the referring RRDP SIA AccessDescription.
-            If this verification fails, the RRDP session MUST be rejected and RRDP cannot be used, see <xref target="RFC8182" section="3.4.5"/> for considerations.
-          </li>
-        </ul>
+        <t>NEW</t>
+        <blockquote>
+          <ul>
+            <li>
+              The Relying Party MUST verify whether the uri attributes in the Update Notification File are of the same origin as the Update Notification File itself.
+              If this verification fails, the file MUST be rejected and RRDP cannot be used, see <xref target="RFC8182" section="3.4.5"/> for considerations.
+            </li>
+            <li>
+              The Relying Party MUST NOT follow HTTP Redirection following from attempts to download Update Notification, Delta, and Snapshot files if the target origin is different from the origin of the Update Notification File specified in the referring RRDP SIA AccessDescription.
+              If this verification fails, the RRDP session MUST be rejected and RRDP cannot be used, see <xref target="RFC8182" section="3.4.5"/> for considerations.
+            </li>
+          </ul>
+        </blockquote>
       </section>
     </section>
 
