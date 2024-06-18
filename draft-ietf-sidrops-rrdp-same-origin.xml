@@ -144,7 +144,7 @@
       <name>Security Considerations</name>
       <t>
         This internet-draft patches an oversight in the original RRDP protocol specification: cross-origin requests allow one repository operator to increase resource consumption for another repository operator.
-        Another way to avoid this undesirable implication would've been for the original RRDP specification to have used relative URIs instead of absolute URIs.
+        Another way to avoid undesirable implications (described in <xref target="issue"/>) would have been for the original RRDP specification use relative URIs instead of absolute URIs.
       </t>
     </section>
 
